@@ -113,14 +113,12 @@
             const shapeMap = new Map();
             shapes.flat().forEach(shape => shapeMap.set(shape, []));
 
-            // Her şekil için olası konumları topla
             for (let row = 0; row < size; row++) {
                 for (let col = 0; col < size; col++) {
                     shapeMap.get(shapes[row][col]).push([row, col]);
                 }
             }
 
-            // Her şekil için rastgele bir Queen yerleştir
             correctQueens = Array.from(shapeMap.entries()).map(([shape, positions]) => {
                 const randomPosition = positions[Math.floor(Math.random() * positions.length)];
                 return randomPosition;
