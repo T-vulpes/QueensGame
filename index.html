@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Queens Puzzle</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+        }
+        .board {
+            display: grid;
+            grid-template-columns: repeat(8, 50px);
+            grid-template-rows: repeat(8, 50px);
+            gap: 2px;
+            background-color: #333;
+            margin-bottom: 20px;
+        }
+        .cell {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            cursor: pointer;
+            background-color: #ecf0f1;
+            position: relative;
+        }
+        .cell.queen::after {
+            content: "♕";
+            font-size: 36px;
+            color: #2c3e50;
+        }
+        .cell.blocked::after {
+            content: "X";
+            font-size: 24px;
+            color: #e74c3c;
+        }
+        .shape1 { background-color: #f39c12; }
+        .shape2 { background-color: #9b59b6; }
+        .shape3 { background-color: #1abc9c; }
+        .shape4 { background-color: #e67e22; }
+        .shape5 { background-color: #3498db; }
+        .shape6 { background-color: #2ecc71; }
+        .shape7 { background-color: #e74c3c; }
+        .shape8 { background-color: #34495e; }
+        #message {
+            margin-top: 20px;
+            font-size: 18px;
+            color: #2c3e50;
+        }
+        #controls {
+            margin-top: 10px;
+        }
+        #controls button {
+            margin-right: 10px;
+            padding: 8px 16px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="board"></div>
+    <div id="controls">
+        <button onclick="giveHint()">Hint</button>
+        <button onclick="giveUp()">Give Up</button>
+    </div>
+    <div id="message"></div>
+    <script>
+        const board = document.querySelector('.board');
+        const message = document.getElementById('message');
+        const size = 8;
+        const cells = [];
+        const queens = [];
+        const shapes = [
+            [1, 1, 1, 0, 2, 2, 2, 2],
+            [1, 0, 0, 0, 2, 3, 3, 2],
+            [1, 4, 4, 0, 3, 3, 3, 2],
+            [4, 4, 4, 5, 5, 5, 3, 3],
+            [6, 6, 4, 5, 5, 5, 5, 7],
+            [6, 5, 5, 5, 5, 8, 7, 7],
+            [6, 5, 5, 8, 8, 8, 8, 7],
+            [6, 6, 6, 8, 8, 7, 7, 7]
+        ];
+
+        let correctQueens = [];
+
+        function createBoard() {
+            for (let row = 0; row < size; row++) {
+                for (let col = 0; col < size; col++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('cell', `shape${shapes[row][col] + 1}`);
+                    cell.dataset.row = row;
+                    cell.dataset.col = col;
+                    cell.dataset.shape = shapes[row][col];
+                    cell.addEventListener('click', handleClick);
+                    board.appendChild(cell);
+                    cells.push(cell);
+                }
+            }
+            generateRandomQueens();
+        }
+
+        function generateRandomQueens() {
+            const shapeMap = new Map();
+            shapes.flat().forEach(shape => shapeMap.set(shape, []));
+
+            // Her şekil için olası konumları topla
+            for (let row = 0; row < size; row++) {
+                for (let col = 0; col < size; col++) {
+                    shapeMap.get(shapes[row][col]).push([row, col]);
+                }
+            }
+
+            // Her şekil için rastgele bir Queen yerleştir
+            correctQueens = Array.from(shapeMap.entries()).map(([shape, positions]) => {
+                const randomPosition = positions[Math.floor(Math.random() * positions.length)];
+                return randomPosition;
+            });
+        }
+
+        function handleClick(event) {
+            const cell = event.target;
+            const row = parseInt(cell.dataset.row);
+            const col = parseInt(cell.dataset.col);
+            const shape = parseInt(cell.dataset.shape);
+
+            if (cell.classList.contains('queen')) {
+                removeQueen(row, col, shape);
+            } else if (!hasQueenInShape(shape) && !hasQueenInRowOrColumn(row, col)) {
+                placeQueen(row, col, shape);
+                checkWin();
+            }
+        }
+
+        function placeQueen(row, col, shape) {
+            const cell = getCell(row, col);
+            cell.classList.add('queen');
+            queens.push({ row, col, shape });
+        }
+
+        function removeQueen(row, col, shape) {
+            const cell = getCell(row, col);
+            cell.classList.remove('queen');
+            queens.splice(queens.findIndex(q => q.row === row && q.col === col), 1);
+        }
+
+        function getCell(row, col) {
+            return cells.find(cell => cell.dataset.row == row && cell.dataset.col == col);
+        }
+
+        function hasQueenInShape(shape) {
+            return queens.some(q => q.shape === shape);
+        }
+
+        function hasQueenInRowOrColumn(row, col) {
+            return queens.some(q => q.row === row || q.col === col);
+        }
+
+function checkWin() {
+    if (queens.length === 8) {
+        let won = true;
+        queens.forEach((q, index) => {
+            const correct = correctQueens[index];
+            if (q.row !== correct[0] || q.col !== correct[1]) {
+                won = false;
+            }
+        });
+
+        if (won) {
+            message.textContent = "You won!";
+        } else {
+            message.textContent = "You won, but the placement is not perfect!";
+        }
+    }
+}
+
+
+        function giveHint() {
+            const remaining = correctQueens.filter(pos => !queens.some(q => q.row === pos[0] && q.col === pos[1]));
+            if (remaining.length > 0) {
+                const [row, col] = remaining[Math.floor(Math.random() * remaining.length)];
+                placeQueen(row, col, shapes[row][col]);
+                message.textContent = "Hint used!";
+                checkWin();
+            }
+        }
+
+        function giveUp() {
+            cells.forEach(cell => cell.classList.remove('queen'));
+            correctQueens.forEach(([row, col]) => placeQueen(row, col, shapes[row][col]));
+            message.textContent = "Correct placement revealed!";
+        }
+
+        createBoard();
+    </script>
+</body>
+</html>
